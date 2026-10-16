@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#C8553D" />
+  <meta name="description" content="Community map of lost, spotted and reunited dogs in Casper, Wyoming." />
+  <title>Casper Lost Dogs · Community map</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Lost Dogs" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🐾</span>
+      <div>
+        <h1>Casper Lost Dogs</h1>
+        <p class="tagline">Help neighbors bring their dogs home</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-ghost" id="install-btn" hidden>📲 Install app</button>
+      <button class="btn btn-lost" data-open-report="lost">Report lost dog</button>
+      <button class="btn btn-spotted" data-open-report="spotted">I found / saw a dog</button>
+    </div>
+  </header>
+
+  <div class="banner demo-banner" id="demo-banner" role="note" hidden>
+    <b>Demo mode</b> · Sample dogs plus anything you add, saved <u>only on this device</u>. Not shared with neighbors yet.
+    <button class="linkish" id="demo-reset" type="button">Reset demo</button>
+  </div>
+  <div class="banner offline-banner" id="offline-banner" role="status" hidden>📴 You're offline. Showing the last reports this device downloaded.</div>
+
+  <main class="layout" data-view="map">
+    <aside class="sidebar" aria-label="Recent reports">
+      <div class="stats" id="stats"></div>
+      <div class="filters">
+        <div class="chips" role="tablist" aria-label="Filter by status">
+          <button class="chip active" data-filter="active">Active</button>
+          <button class="chip" data-filter="lost"><i class="dot lost"></i>Lost</button>
+          <button class="chip" data-filter="spotted"><i class="dot spotted"></i>Spotted</button>
+          <button class="chip" data-filter="reunited"><i class="dot reunited"></i>Reunited</button>
+          <button class="chip" data-filter="all">All</button>
+        </div>
+        <input id="search" class="search" type="search" placeholder="Search breed, color, name, area…" autocomplete="off" />
+      </div>
+      <ul id="list" class="list"></ul>
+    </aside>
+
+    <section class="map-wrap">
+      <div id="map" aria-label="Map of lost and spotted dogs"></div>
+      <div class="legend">
+        <span><i class="dot lost"></i>Lost</span>
+        <span><i class="dot spotted"></i>Spotted / found</span>
+        <span><i class="dot reunited"></i>Reunited</span>
+        <span><i class="dot sighting"></i>Sighting</span>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="View">
+    <button class="tab active" data-view="map">🗺️ Map</button>
+    <button class="tab fab" data-open-report="choose" aria-label="Report a dog">＋</button>
+    <button class="tab" data-view="list">📋 List <span id="tab-count" class="pill"></span></button>
+  </nav>
+
+  <!-- Report / sighting modal -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="close" data-close aria-label="Close">×</button>
+      <h2 id="modal-title">Report a dog</h2>
+
+      <div id="choose-step" class="choose" hidden>
+        <button class="choice lost" data-choose="lost"><b>😢 My dog is lost</b><span>Post a lost dog report with a photo and where they were last seen.</span></button>
+        <button class="choice spotted" data-choose="spotted"><b>👀 I found or saw a dog</b><span>Share where you saw a loose dog so its owner can find it.</span></button>
+      </div>
+
+      <form id="report-form" novalidate>
+        <input type="hidden" name="mode" />
+        <input type="hidden" name="targetId" />
+        <div class="seg" id="status-seg">
+          <label><input type="radio" name="status" value="lost" checked /> <span>Lost</span></label>
+          <label><input type="radio" name="status" value="spotted" /> <span>Spotted / found</span></label>
+        </div>
+        <p class="sighting-for" id="sighting-for" hidden></p>
+
+        <div class="grid">
+          <label class="f-name">Dog's name <em class="opt-spotted">(if known)</em>
+            <input name="name" maxlength="60" placeholder="e.g. Biscuit" />
+          </label>
+          <label class="f-breed">Breed
+            <input name="breed" maxlength="80" placeholder="e.g. Lab mix" list="breeds" />
+          </label>
+          <label class="full f-color">Color &amp; markings
+            <input name="color" maxlength="120" placeholder="e.g. Black with white chest, red collar" />
+          </label>
+          <label class="full">Notes
+            <textarea name="description" rows="2" maxlength="1000" placeholder="Temperament, collar, tags, which way it was heading…"></textarea>
+          </label>
+          <label class="full f-link" hidden>Could this be one of these lost dogs?
+            <select name="linkedTo"><option value="">Not sure / none of these</option></select>
+          </label>
+          <label>Photo
+            <input name="photo" type="file" accept="image/*" />
+          </label>
+          <label>Last seen
+            <input name="seenAt" type="datetime-local" required />
+          </label>
+        </div>
+        <div class="photo-preview" id="photo-preview" hidden><img alt="Photo preview" /></div>
+
+        <fieldset class="loc">
+          <legend>Where? <span class="hint">Tap the map to drop a pin</span></legend>
+          <div id="pick-map"></div>
+          <div class="loc-row">
+            <button type="button" class="btn btn-ghost" id="use-location">📍 Use my location</button>
+            <input name="locationLabel" maxlength="120" placeholder="Area / cross streets (optional)" />
+          </div>
+          <input type="hidden" name="lat" /><input type="hidden" name="lng" />
+        </fieldset>
+
+        <div class="grid">
+          <label>Your name
+            <input name="contactName" maxlength="80" required autocomplete="name" />
+          </label>
+          <label class="f-phone">Phone
+            <input name="contactPhone" type="tel" maxlength="40" autocomplete="tel" placeholder="(307) 555-0123" />
+          </label>
+          <label class="full f-email">Email
+            <input name="contactEmail" type="email" maxlength="120" autocomplete="email" placeholder="Phone or email required" />
+          </label>
+          <label class="full f-contact" hidden>Phone or email
+            <input name="contact" maxlength="120" placeholder="So the owner can reach you (optional)" />
+          </label>
+        </div>
+        <p class="hint privacy-note">Your name and phone/email are shown publicly on the map so people can reach you.</p>
+        <p class="error" id="form-error" role="alert"></p>
+        <button class="btn btn-primary wide" type="submit" id="submit-btn">Post report</button>
+      </form>
+
+      <div id="done-step" hidden></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <!-- iPhone / iPad: Safari has no install prompt, so explain Add to Home Screen -->
+  <div class="modal" id="ios-install" hidden>
+    <div class="modal-card ios-card" role="dialog" aria-modal="true" aria-labelledby="ios-title">
+      <button class="close" data-dismiss aria-label="Close">×</button>
+      <h2 id="ios-title">Add to your Home Screen</h2>
+      <ol>
+        <li>Open this page in <b>Safari</b>.</li>
+        <li>Tap the <b>Share</b> button <span class="share-ico" aria-hidden="true">⬆︎</span> (bottom of the screen, or top on iPad).</li>
+        <li>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+      </ol>
+      <p class="muted">It opens full screen like a regular app, with the paw icon.</p>
+      <button class="btn btn-primary wide" data-dismiss>Got it</button>
+    </div>
+  </div>
+
+  <datalist id="breeds">
+    <option>Labrador Retriever</option><option>Golden Retriever</option><option>German Shepherd</option>
+    <option>Blue Heeler</option><option>Border Collie</option><option>Australian Shepherd</option>
+    <option>Husky</option><option>Pit Bull</option><option>Chihuahua</option><option>Dachshund</option>
+    <option>Beagle</option><option>Boxer</option><option>Poodle</option><option>Mixed breed</option>
+  </datalist>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="config.js"></script>
+  <script src="seed.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
