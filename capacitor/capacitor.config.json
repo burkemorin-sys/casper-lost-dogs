@@ -1,0 +1,12 @@
+{
+  "appId": "io.github.burkemorinsys.casperlostdogs",
+  "appName": "Casper Lost Dogs",
+  "webDir": "www",
+  "backgroundColor": "#FBF6EF",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

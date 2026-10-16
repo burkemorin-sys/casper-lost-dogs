@@ -1,0 +1,9 @@
+{
+  "name": "casper-lost-dogs",
+  "version": "1.0.0",
+  "description": "Community lost & found dog tracker with a live map",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "reset": "node server.js --reset-only" },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}

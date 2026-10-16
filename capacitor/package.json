@@ -1,0 +1,17 @@
+{
+  "name": "casper-lost-dogs-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Capacitor wrapper that turns the PWA in ../public into an Android APK (built by .github/workflows/android-apk.yml)",
+  "scripts": {
+    "prepare-web": "node -e \"const fs=require('fs');fs.rmSync('www',{recursive:true,force:true});fs.cpSync('../public','www',{recursive:true});fs.rmSync('www/sw.js',{force:true})\"",
+    "build:apk": "npm run prepare-web && npx cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0"
+  }
+}
