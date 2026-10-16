@@ -5,6 +5,10 @@ A community map for lost and found dogs in Casper, WY. Neighbors can report a **
 * **Open the app:** https://burkemorin-sys.github.io/casper-lost-dogs/
 * **Android APK:** https://github.com/burkemorin-sys/casper-lost-dogs/releases/latest/download/casper-lost-dogs-debug.apk
 
+<img src="screenshots/pages-mobile.png" alt="The app on a phone" width="260"> <img src="screenshots/qr.png" alt="QR code for the app" width="260">
+
+Print the QR code (`screenshots/qr.png`) on lost-dog flyers so neighbors can open the map from their phone camera.
+
 ## Put it on your phone
 
 ### iPhone / iPad
